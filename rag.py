@@ -139,7 +139,7 @@ class SimpleRAG:
             print(f"[RAG] Gagal membaca Excel {file_path}: {e}")
             return ""
 
-    def load_documents(self):
+    def load_documents(self, force_rebuild: bool = False):
         self.chunks = []
         self.file_chunk_counts = Counter()
         total_tokens = 0
@@ -150,7 +150,7 @@ class SimpleRAG:
 
         # 0. Cek apakah ada file indeks terkompilasi (kb_index.json.gz) untuk pemuatan instan (<0.3s) di cloud/Vercel
         cache_path = os.path.join(self.kb_dir, "kb_index.json.gz")
-        if os.path.exists(cache_path):
+        if not force_rebuild and os.path.exists(cache_path):
             try:
                 import gzip
                 import json
@@ -229,6 +229,34 @@ class SimpleRAG:
                 self.doc_freqs[t] += 1
 
         print(f"[RAG] Berhasil memuat {self.num_chunks} fragmen dokumen dari {len(files)} file di '{self.kb_dir}'.")
+        self.save_precompiled_index()
+
+    def save_precompiled_index(self):
+        """Simpan indeks ke file .json.gz terkompresi untuk pemuatan kilat (<0.3s)"""
+        try:
+            import gzip
+            import json
+            cache_path = os.path.join(self.kb_dir, "kb_index.json.gz")
+            serializable_chunks = []
+            for c in self.chunks:
+                serializable_chunks.append({
+                    "file": c["file"],
+                    "text": c["text"],
+                    "tokens": c["tokens"],
+                    "tf": dict(c["tf"])
+                })
+            data = {
+                "num_chunks": self.num_chunks,
+                "avg_chunk_len": self.avg_chunk_len,
+                "doc_freqs": dict(self.doc_freqs),
+                "file_chunk_counts": dict(self.file_chunk_counts),
+                "chunks": serializable_chunks
+            }
+            with gzip.open(cache_path, "wt", encoding="utf-8") as f:
+                json.dump(data, f)
+            print(f"[RAG] Berhasil menyimpan indeks {self.num_chunks} fragmen ke '{cache_path}'.")
+        except Exception as e:
+            print(f"[RAG] Gagal menyimpan cache terkompilasi: {e}")
 
     def get_file_list(self) -> List[Dict[str, Any]]:
         """Mengembalikan daftar semua file patokan beserta ukuran dan jumlah fragmennya"""

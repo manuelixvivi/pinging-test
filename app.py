@@ -435,6 +435,45 @@ def resolve_answer(parsed: dict, options: List[OptionItem]) -> tuple:
 
     return ans, matched
 
+NOISE_PATTERNS = [
+    r"persyaratan layanan\s*\|\s*kebijakan privasi\s*\|\s*pelajari selengkapnya",
+    r"pelajari selengkapnya",
+    r"dibuat oleh ai berdasarkan sumber.*",
+    r"arrow_back\s+ke notebook.*",
+    r"\b(info_spark|link_2|thumb_up|thumb_down|flag)\b"
+]
+
+def clean_noise_text(text: str) -> str:
+    if not text:
+        return ""
+    cleaned = text
+    for pat in NOISE_PATTERNS:
+        cleaned = re.sub(pat, "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    return cleaned
+
+def extract_options_from_text(text: str) -> List[OptionItem]:
+    """Cari pola baris A. ... B. ... C. ... D. ... dari teks mentah"""
+    if not text:
+        return []
+    lines = [line.strip() for line in re.split(r'[\r\n]+', text) if line.strip()]
+    options = []
+    
+    for line in lines:
+        m = re.match(r'^([A-Fa-f1-6])[\.\)\:\-]\s*(.+)$', line)
+        if m:
+            label = m.group(1).upper()
+            opt_text = m.group(2).strip()
+            if not any(n in opt_text.lower() for n in ["pelajari", "kebijakan", "persyaratan"]):
+                options.append(OptionItem(label=label, text=opt_text))
+    
+    if len(options) < 2:
+        matches = re.findall(r'(?:^|\s)([A-Ea-e])[\.\)\:\-]\s+([^A-E\.\n]{4,300})', text)
+        if len(matches) >= 2:
+            options = [OptionItem(label=m[0].upper(), text=m[1].strip()) for m in matches]
+            
+    return options
+
 @app.post("/api/solve", response_model=SolveResponse)
 async def solve_question(req: SolveRequest):
     # Prioritaskan Groq jika ada kunci API aktif di key pool (kecepatan 1-2 detik)
@@ -477,6 +516,29 @@ async def solve_question(req: SolveRequest):
         except Exception as ocr_err:
             print(f"[OCR Warning/Timeout] {ocr_err}")
 
+    # Bersihkan noise/footer dari question_context dan html
+    if req.question_context:
+        req.question_context = clean_noise_text(req.question_context)
+    if req.html:
+        req.html = clean_noise_text(req.html)
+
+    # Filter opsi jika ada yang berisi noise/disclaimer (misal "Pelajari selengkapnya")
+    if req.options:
+        req.options = [
+            o for o in req.options 
+            if not any(n in (o.text or "").lower() for n in ["pelajari selengkapnya", "persyaratan layanan", "kebijakan privasi", "dibuat oleh ai"])
+        ]
+
+    # Jika req.options kosong atau hanya 1, coba ekstrak dari req.html atau req.question_context
+    if not req.options or len(req.options) < 2:
+        extracted = extract_options_from_text(req.html or "")
+        if len(extracted) >= 2:
+            req.options = extracted
+        elif req.question_context:
+            extracted_from_q = extract_options_from_text(req.question_context)
+            if len(extracted_from_q) >= 2:
+                req.options = extracted_from_q
+
     # Fallback jaring pengaman: Jika question_context masih kosong/sangat pendek, gunakan teks halaman (req.html)
     if (not req.question_context or len(req.question_context.strip()) < 5) and req.html:
         clean_html = re.sub(r'<[^>]+>', ' ', req.html)
@@ -511,13 +573,17 @@ async def solve_question(req: SolveRequest):
         ])
 
     system_prompt = (
-        "Anda adalah asisten AI browser dalam mode 'Direct Answer'.\n"
-        "Tugas Anda: Analisis soal latihan/simulasi dari screenshot, teks halaman, dan referensi dokumen Knowledge Base jika tersedia.\n"
-        "Tentukan opsi jawaban yang PALING BENAR.\n\n"
+        "Anda adalah asisten AI browser dalam mode 'Direct Answer' untuk simulasi dan kuis perbankan BCA (SOPAN).\n"
+        "Tugas Anda: Analisis soal latihan/simulasi dari teks halaman, pilihan jawaban, dan referensi dokumen Knowledge Base jika tersedia.\n"
+        "Tentukan opsi jawaban yang PALING BENAR secara presisi.\n\n"
+        "PANDUAN KETELITIAN:\n"
+        "- Baca dengan sangat cermat kata kunci pembatas / negasi (seperti: 'TIDAK mendapatkan fisik bilyet', 'bebas biaya', 'tanpa bilyet').\n"
+        "- Tolak opsi pengecoh yang salah faktual meskipun terdengar meyakinkan (misal: 'menerima Bilyet fisik via kurir', 'mencetak di ATM BCA Multiguna', 'Safe Deposit Box').\n"
+        "- Pada e-Deposito BCA, nasabah TIDAK mendapatkan fisik bilyet (tanpa bilyet fisik, transaksi dan catatan kepemilikan 100% digital di e-channel).\n\n"
         "ATURAN WAJIB:\n"
         "1. Jawab HANYA dalam format JSON valid berikut tanpa penjelasan, tanpa basa-basi:\n"
         "{\n"
-        '  "answer": "HURUF_OPSI (misal A, B, C, D) atau nomor urut",\n'
+        '  "answer": "HURUF_OPSI (misal A, B, C, D, E)",\n'
         '  "matched_text": "teks opsi yang benar persis seperti tertulis di halaman",\n'
         '  "confidence": "high | medium | low"\n'
         "}\n"

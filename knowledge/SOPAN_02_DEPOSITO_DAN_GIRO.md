@@ -124,7 +124,7 @@ Produk Deposito Berjangka yang dapat dibuka oleh nasabah melalui channel BCA.
 - E-deposito valas -> cuma bisa lewat myBCA
 - E-deposito rupiah -> melalui channel yang berbeda dari channel penempatan e-Deposito
 - Pilihan jangka waktu yang fleksibel yaitu 1, 3, 6, atau 12 bulan.
-- Tida dapat bilyet fisik
+- Tidak mendapatkan fisik bilyet (tanpa bilyet fisik, kepemilikan rekening e-Deposito dicatat secara digital)
 
 **Varian Produk:** E-deposito rupiah & E-deposito valas (cuma bisa WNI, WNA)
 
