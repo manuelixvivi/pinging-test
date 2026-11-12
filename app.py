@@ -440,6 +440,8 @@ NOISE_PATTERNS = [
     r"pelajari selengkapnya",
     r"dibuat oleh ai berdasarkan sumber.*",
     r"arrow_back\s+ke notebook.*",
+    r"favorit anda\s+edit\s+akun\s+drive\s+gmail.*",
+    r"lainnya dari google.*",
     r"\b(info_spark|link_2|thumb_up|thumb_down|flag)\b"
 ]
 
