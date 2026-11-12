@@ -20,3 +20,5 @@ run.ps1
 # OS files
 .DS_Store
 Thumbs.db
+
+server.log
