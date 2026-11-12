@@ -153,9 +153,14 @@ def health_check():
 
 @app.get("/simulation", response_class=HTMLResponse)
 def get_simulation_page():
-    sim_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "test_page", "quiz_simulation.html"))
-    if os.path.exists(sim_path):
-        return FileResponse(sim_path)
+    candidates = [
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "quiz_simulation.html"),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "test_page", "quiz_simulation.html")),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            with open(p, "r", encoding="utf-8") as f:
+                return HTMLResponse(content=f.read())
     return HTMLResponse("<h1>Halaman simulasi tidak ditemukan</h1>", status_code=404)
 
 # ====================================================
@@ -164,9 +169,14 @@ def get_simulation_page():
 
 @app.get("/kb", response_class=HTMLResponse)
 def get_kb_manager_page():
-    kb_page_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "kb_manager.html")
-    if os.path.exists(kb_page_path):
-        return FileResponse(kb_page_path)
+    candidates = [
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "kb_manager.html"),
+        os.path.join(os.getcwd(), "kb_manager.html"),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            with open(p, "r", encoding="utf-8") as f:
+                return HTMLResponse(content=f.read())
     return HTMLResponse("<h1>Halaman Knowledge Base Manager tidak ditemukan</h1>", status_code=404)
 
 @app.get("/api/kb/files")

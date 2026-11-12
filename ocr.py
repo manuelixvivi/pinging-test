@@ -3,7 +3,10 @@ import io
 import re
 from typing import Dict, Any, List, Optional
 from PIL import Image
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
 # Inisialisasi RapidOCR engine (singleton)
 try:
