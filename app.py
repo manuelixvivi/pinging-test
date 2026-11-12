@@ -423,6 +423,16 @@ def resolve_answer(parsed: dict, options: List[OptionItem]) -> tuple:
         if 0 <= idx < len(options) and options[idx].label:
             ans = options[idx].label.upper()
 
+    # Fallback garansi: jika ans masih kosong, pastikan tidak mengembalikan string kosong
+    if not ans:
+        match_m = re.search(r'\b([A-D])\b', matched)
+        if match_m:
+            ans = match_m.group(1).upper()
+        elif options and options[0].label:
+            ans = options[0].label.upper()
+        else:
+            ans = "A"
+
     return ans, matched
 
 @app.post("/api/solve", response_model=SolveResponse)
@@ -467,6 +477,12 @@ async def solve_question(req: SolveRequest):
         except Exception as ocr_err:
             print(f"[OCR Warning/Timeout] {ocr_err}")
 
+    # Fallback jaring pengaman: Jika question_context masih kosong/sangat pendek, gunakan teks halaman (req.html)
+    if (not req.question_context or len(req.question_context.strip()) < 5) and req.html:
+        clean_html = re.sub(r'<[^>]+>', ' ', req.html)
+        clean_html = re.sub(r'\s+', ' ', clean_html).strip()
+        req.question_context = clean_html[:2000]
+
     # 1. Kumpulkan teks untuk pencarian Knowledge Base
     search_query = req.question_context or ""
     if req.options:
@@ -509,9 +525,11 @@ async def solve_question(req: SolveRequest):
         "3. JANGAN sertakan alasan atau teks di luar JSON."
     )
 
-    user_text = f"SOAL/KONTEKS HALAMAN:\n{req.question_context or 'Perhatikan gambar/tangkapan layar halaman.'}\n\n"
+    user_text = f"SOAL/KONTEKS HALAMAN:\n{req.question_context or 'Perhatikan teks halaman.'}\n\n"
     if options_formatted:
         user_text += f"PILIHAN OPSI JAWABAN:\n{options_formatted}\n\n"
+    else:
+        user_text += "PERHATIAN: Pilihan jawaban ada di dalam teks konteks/halaman di atas. Identifikasi opsi yang paling tepat, tuliskan hurufnya (A, B, C, D) di 'answer' dan teks pilihannya di 'matched_text'.\n\n"
     if kb_context:
         user_text += f"REFERENSI DOKUMEN KNOWLEDGE BASE:\n{kb_context}\n\n"
     user_text += "Berikan jawaban yang benar dalam format JSON sesuai instruksi."
