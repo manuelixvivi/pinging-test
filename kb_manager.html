@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Base Manager - AI Browser Assistant</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-hover: #293548;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #10b981;
+      --accent-hover: #059669;
+      --accent-cyan: #06b6d4;
+      --border: #334155;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 30px 20px;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .title-area h1 {
+      font-size: 24px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .title-area p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .badge-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--accent);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .btn {
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: var(--card-hover);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--danger);
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .btn-danger:hover {
+      background: var(--danger);
+      color: white;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Tabs */
+    .tabs-header {
+      display: flex;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 18px;
+    }
+
+    .tab-btn {
+      padding: 10px 16px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+    }
+
+    .tab-btn.active::after {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Upload Drop Zone */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 36px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(16, 185, 129, 0.05);
+    }
+
+    .drop-icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+
+    .drop-text {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .drop-subtext {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Form Inputs */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+
+    textarea {
+      min-height: 130px;
+      resize: vertical;
+    }
+
+    /* File List Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th {
+      background: rgba(0, 0, 0, 0.2);
+      color: var(--text-muted);
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .file-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: #334155;
+      color: #cbd5e1;
+    }
+
+    .badge-pdf { background: #7f1d1d; color: #fca5a5; }
+    .badge-docx { background: #1e3a8a; color: #93c5fd; }
+    .badge-xlsx, .badge-xlsm { background: #14532d; color: #86efac; }
+    .badge-md { background: #064e3b; color: #6ee7b7; }
+    .badge-txt { background: #374151; color: #d1d5db; }
+
+    /* Live Search Tester */
+    .search-tester {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .search-results {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .result-item {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      padding: 12px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .result-source {
+      font-size: 11px;
+      color: var(--accent-cyan);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 700px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 30px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="title-area">
+        <h1>📚 Knowledge Base Manager</h1>
+        <p>Pusat dokumen patokan referensi untuk AI Browser Assistant</p>
+      </div>
+      <div class="header-actions">
+        <div id="status-badge" class="badge-status">
+          <span class="status-dot"></span>
+          <span id="badge-text">Memuat status...</span>
+        </div>
+        <button id="btn-reindex" class="btn btn-secondary">
+          <span>🔄</span> Re-Index Dokumen
+        </button>
+      </div>
+    </header>
+
+    <!-- Upload & Input Card -->
+    <div class="card">
+      <div class="tabs-header">
+        <button class="tab-btn active" onclick="switchTab('upload')">📁 Unggah File (.xlsx, .pdf, .docx, .md, .txt)</button>
+        <button class="tab-btn" onclick="switchTab('url')">🌐 Ambil dari Website / URL</button>
+        <button class="tab-btn" onclick="switchTab('text')">✏️ Tulis / Tempel Teks Langsung</button>
+        <button class="tab-btn" onclick="switchTab('keys')">🔑 Kunci API & Failover (Anti Rate-Limit)</button>
+      </div>
+
+      <!-- Tab 1: Upload File -->
+      <div id="tab-upload" class="tab-content active">
+        <div class="drop-zone" id="drop-zone">
+          <div class="drop-icon">📤</div>
+          <div class="drop-text">Tarik & Letakkan File Materi Anda di Sini</div>
+          <div class="drop-subtext">Mendukung format Excel (.xlsx, .xlsm), PDF (.pdf), Microsoft Word (.docx), Markdown (.md), atau Teks (.txt)</div>
+          <input type="file" id="file-input" multiple accept=".pdf,.docx,.txt,.md,.json,.xlsx,.xlsm" style="display: none;">
+          <button type="button" class="btn btn-primary" style="margin-top: 14px;" onclick="document.getElementById('file-input').click()">
+            Pilih File dari Komputer
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab 2: Ambil dari Website / URL -->
+      <div id="tab-url" class="tab-content">
+        <form id="url-form">
+          <div class="form-group">
+            <label for="web-url">URL Website / Halaman Referensi:</label>
+            <input type="text" id="web-url" placeholder="Contoh: https://www.bca.co.id/id/individu/produk/simpanan/tahapan-berjangka atau bca.co.id" required>
+            <span style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+              Sistem akan mengekstrak seluruh teks artikel, tabel, dan materi dari website tersebut ke Knowledge Base.
+            </span>
+          </div>
+
+          <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+            <div class="form-group" style="flex: 1; min-width: 200px;">
+              <label for="crawl-depth">Jangkauan Halaman (Crawl Depth):</label>
+              <select id="crawl-depth" style="background: #0f172a; border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 8px; font-size: 13px; outline: none; width: 100%;">
+                <option value="1">1 Halaman (Halaman ini saja - Cepat)</option>
+                <option value="5">Hingga 5 Halaman (Jelajahi link produk terkait)</option>
+                <option value="10">Hingga 10 Halaman (Jelajahi mendalam)</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="flex: 1; min-width: 200px;">
+              <label for="web-title">Nama Dokumen (Opsional):</label>
+              <input type="text" id="web-title" placeholder="Contoh: Info_Produk_BCA">
+            </div>
+          </div>
+
+          <button type="submit" id="btn-submit-url" class="btn btn-primary" style="margin-top: 6px;">
+            <span>🚀</span> Sedot Halaman & Jadikan Patokan
+          </button>
+          <span id="url-loading-status" style="margin-left: 12px; font-size: 13px; color: var(--accent); display: none;">
+            ⏳ Sedang mengunduh dan mengekstrak halaman web...
+          </span>
+        </form>
+      </div>
+
+      <!-- Tab 3: Input Teks Langsung -->
+      <div id="tab-text" class="tab-content">
+        <form id="text-form">
+          <div class="form-group">
+            <label for="doc-title">Nama Dokumen / Materi:</label>
+            <input type="text" id="doc-title" placeholder="Contoh: Materi_Produk_Tahaka_BCA" required>
+          </div>
+          <div class="form-group">
+            <label for="doc-content">Isi Rangkuman / Catatan Soal:</label>
+            <textarea id="doc-content" placeholder="Tempel materi, aturan produk, atau catatan referensi Anda di sini..." required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">
+            💾 Simpan ke Knowledge Base
+          </button>
+        </form>
+      </div>
+
+      <!-- Tab 4: Kelola Kunci API & Auto-Failover (Anti Rate-Limit) -->
+      <div id="tab-keys" class="tab-content">
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 14px 18px; margin-bottom: 20px;">
+          <h4 style="margin: 0 0 6px 0; color: var(--accent); font-size: 14px; display: flex; align-items: center; gap: 8px;">
+            <span>🛡️</span> Cara Kerja Multi-Key Pool & Auto-Failover
+          </h4>
+          <p style="margin: 0; font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+            Akun gratis Groq memiliki batas <strong>7.000 Token/Menit</strong> dan <strong>200.000 Token/Hari</strong>.
+            Sistem backend telah dioptimasi dengan <strong>Smart Filter</strong> (hemat 90% token karena tidak melampirkan screenshot saat teks soal terbaca bersih dari layar).
+            Agar ujian tidak terganggu sama sekali, Anda dapat menambahkan 2–3 kunci Groq gratis (buat dari <a href="https://console.groq.com/keys" target="_blank" style="color: var(--accent); text-decoration: underline;">console.groq.com</a>).
+            Jika satu kunci menyentuh limit, backend akan <strong>langsung mengoper (failover) ke kunci cadangan secara otomatis</strong> dalam milidetik!
+          </p>
+        </div>
+
+        <form id="key-form" style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 20px;">
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label for="new-groq-key">Tambahkan Kunci Groq API Baru (Cadangan):</label>
+            <input type="text" id="new-groq-key" placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" required style="font-family: monospace;">
+          </div>
+          <button type="submit" class="btn btn-primary" style="white-space: nowrap;">
+            <span>➕</span> Tambah ke Pool Failover
+          </button>
+        </form>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <strong style="font-size: 13px; color: var(--text);">Daftar Kunci API Terdaftar di Pool:</strong>
+          <button type="button" class="btn btn-secondary" style="font-size: 11px; padding: 4px 10px;" onclick="loadApiKeys()">
+            🔄 Segarkan Status Kunci
+          </button>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 60px;">Prioritas</th>
+                <th>Kunci API</th>
+                <th style="width: 170px;">Status Kuota</th>
+                <th style="width: 100px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="keys-table-body">
+              <tr>
+                <td colspan="4" class="empty-state">Sedang memuat data kunci...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Documents Table -->
+    <div class="card">
+      <div class="card-title">
+        <span>📄 Daftar Dokumen Patokan Aktif</span>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Nama File</th>
+              <th>Format</th>
+              <th>Ukuran</th>
+              <th>Fragmen (Chunks)</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="files-table-body">
+            <tr>
+              <td colspan="5" class="empty-state">Sedang memuat daftar file...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Live History & Proof Card -->
+    <div class="card">
+      <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>📋 Riwayat Pemindaian & Bukti Dokumen yang Dibaca LLM</span>
+        <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 10px;" onclick="loadHistory()">
+          🔄 Refresh Riwayat
+        </button>
+      </div>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+        Setiap kali Anda menekan <code>Ctrl + Shift + H</code>, sistem mencatat soal dan <strong>dokumen patokan persis</strong> yang dibaca oleh LLM untuk menentukan jawaban.
+      </p>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 80px;">Waktu</th>
+              <th>Soal yang Dipindai</th>
+              <th>Dokumen Referensi yang Dibaca LLM</th>
+              <th style="width: 140px;">Jawaban AI</th>
+            </tr>
+          </thead>
+          <tbody id="history-table-body">
+            <tr>
+              <td colspan="4" class="empty-state">Belum ada pemindaian soal. Tekan Ctrl+Shift+H pada halaman soal untuk melihat bukti baca di sini.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Live Search Tester -->
+    <div class="card">
+      <div class="card-title">
+        <span>🔍 Uji Pencarian Pengetahuan (Live Tester)</span>
+      </div>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+        Ketik kata kunci atau soal untuk melihat potongan materi mana yang akan diambil AI saat menekan <code>Ctrl + Shift + H</code>.
+      </p>
+      <div class="search-tester">
+        <input type="text" id="search-input" placeholder="Contoh: autodebet tahaka februari atau port https">
+        <button id="btn-search" class="btn btn-primary">Cari</button>
+      </div>
+      <div id="search-results" class="search-results"></div>
+    </div>
+  </div>
+
+  <!-- Modal Preview -->
+  <div id="preview-modal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 id="modal-title">Preview File</h3>
+        <button class="btn btn-secondary" onclick="closeModal()">✕</button>
+      </div>
+      <div id="modal-content" class="modal-body"></div>
+    </div>
+  </div>
+
+  <script>
+    let activeTabName = 'upload';
+
+    function switchTab(tabId) {
+      activeTabName = tabId;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      
+      const buttons = document.querySelectorAll('.tab-btn');
+      if (tabId === 'upload') {
+        buttons[0].classList.add('active');
+        document.getElementById('tab-upload').classList.add('active');
+      } else if (tabId === 'url') {
+        buttons[1].classList.add('active');
+        document.getElementById('tab-url').classList.add('active');
+      } else if (tabId === 'text') {
+        buttons[2].classList.add('active');
+        document.getElementById('tab-text').classList.add('active');
+      } else if (tabId === 'keys') {
+        buttons[3].classList.add('active');
+        document.getElementById('tab-keys').classList.add('active');
+        loadApiKeys();
+      }
+    }
+
+    async function loadFileList() {
+      try {
+        const res = await fetch('/api/kb/files');
+        const data = await res.json();
+        
+        document.getElementById('badge-text').textContent = `${data.total_files} File (${data.total_chunks} Fragmen Aktif)`;
+        
+        const tbody = document.getElementById('files-table-body');
+        if (!data.files || data.files.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Belum ada file di Knowledge Base. Silakan upload file pertama Anda di atas.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = data.files.map(f => `
+          <tr>
+            <td><strong>${f.name}</strong></td>
+            <td><span class="file-badge badge-${f.type}">${f.type}</span></td>
+            <td>${f.size_kb} KB</td>
+            <td><strong style="color: var(--accent);">${f.chunks}</strong> fragmen</td>
+            <td>
+              <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="viewFile('${f.name}')">👁️ Lihat</button>
+              <button class="btn btn-danger" onclick="deleteFile('${f.name}')">🗑️ Hapus</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Upload Files via Dropzone
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+
+    ['dragenter', 'dragover'].forEach(name => {
+      dropZone.addEventListener(name, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(name => {
+      dropZone.addEventListener(name, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+      });
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      if (e.dataTransfer.files.length) {
+        handleUpload(e.dataTransfer.files);
+      }
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) {
+        handleUpload(fileInput.files);
+      }
+    });
+
+    async function handleUpload(files) {
+      const formData = new FormData();
+      for (const f of files) {
+        formData.append('files', f);
+      }
+
+      document.getElementById('badge-text').textContent = "Mengunggah & Mengindeks...";
+
+      try {
+        const res = await fetch('/api/kb/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        alert(`Berhasil mengunggah ${data.uploaded.length} file! Total fragmen sekarang: ${data.total_chunks}`);
+        fileInput.value = '';
+        loadFileList();
+      } catch (err) {
+        alert("Gagal mengunggah file: " + err.message);
+      }
+    }
+
+    // Submit Text Form
+    document.getElementById('text-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('doc-title').value.trim();
+      const content = document.getElementById('doc-content').value.trim();
+
+      if (!title || !content) return;
+
+      try {
+        const res = await fetch('/api/kb/text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, content })
+        });
+        const data = await res.json();
+        alert(`Materi "${title}" berhasil disimpan! (${data.total_chunks} total fragmen)`);
+        document.getElementById('doc-title').value = '';
+        document.getElementById('doc-content').value = '';
+        switchTab('upload');
+        loadFileList();
+      } catch (err) {
+        alert("Gagal menyimpan teks: " + err.message);
+      }
+    });
+
+    // Submit URL Form (Scrape Website ke Knowledge Base)
+    document.getElementById('url-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const url = document.getElementById('web-url').value.trim();
+      const maxPages = parseInt(document.getElementById('crawl-depth').value) || 1;
+      const title = document.getElementById('web-title').value.trim();
+      const btnSubmit = document.getElementById('btn-submit-url');
+      const statusSpan = document.getElementById('url-loading-status');
+
+      if (!url) return;
+
+      btnSubmit.disabled = true;
+      statusSpan.style.display = 'inline';
+
+      try {
+        const res = await fetch('/api/kb/scrape', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: url,
+            max_pages: maxPages,
+            title: title || undefined
+          })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.detail || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        alert(`Berhasil mengambil ${data.pages_scraped} halaman dari website!\nDisimpan sebagai: ${data.filename}\nTotal fragmen sekarang: ${data.total_chunks}`);
+        document.getElementById('web-url').value = '';
+        document.getElementById('web-title').value = '';
+        loadFileList();
+      } catch (err) {
+        alert("Gagal mengambil website: " + err.message);
+      } finally {
+        btnSubmit.disabled = false;
+        statusSpan.style.display = 'none';
+      }
+    });
+
+    // Delete File
+    async function deleteFile(filename) {
+      if (!confirm(`Apakah Anda yakin ingin menghapus file "${filename}" dari Knowledge Base?`)) return;
+      try {
+        await fetch(`/api/kb/files/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+        loadFileList();
+      } catch (err) {
+        alert("Gagal menghapus file: " + err.message);
+      }
+    }
+
+    // View File
+    async function viewFile(filename) {
+      try {
+        const res = await fetch(`/api/kb/view/${encodeURIComponent(filename)}`);
+        const text = await res.text();
+        document.getElementById('modal-title').textContent = filename;
+        document.getElementById('modal-content').textContent = text;
+        document.getElementById('preview-modal').style.display = 'flex';
+      } catch (err) {
+        alert("Gagal memuat isi file.");
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('preview-modal').style.display = 'none';
+    }
+
+    // Re-index
+    document.getElementById('btn-reindex').addEventListener('click', async () => {
+      document.getElementById('badge-text').textContent = "Mengindeks ulang...";
+      await fetch('/api/refresh-kb', { method: 'POST' });
+      await loadFileList();
+      alert("Indeks Knowledge Base berhasil diperbarui!");
+    });
+
+    // Search Tester
+    async function performTestSearch() {
+      const q = document.getElementById('search-input').value.trim();
+      if (!q) return;
+
+      const container = document.getElementById('search-results');
+      container.innerHTML = '<div style="color: var(--text-muted);">Mencari...</div>';
+
+      try {
+        const res = await fetch(`/api/kb/search?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if (!data.results || data.results.length === 0) {
+          container.innerHTML = '<div class="empty-state">Tidak ada fragmen yang cocok dengan kata kunci tersebut.</div>';
+          return;
+        }
+
+        container.innerHTML = data.results.map((r, i) => `
+          <div class="result-item">
+            <div class="result-source">Hasil #${i+1} — Sumber: ${r.file}</div>
+            <div>${r.text}</div>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = `<div style="color: var(--danger);">Error: ${err.message}</div>`;
+      }
+    }
+
+    document.getElementById('btn-search').addEventListener('click', performTestSearch);
+    document.getElementById('search-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') performTestSearch();
+    });
+
+    // History Loader
+    async function loadHistory() {
+      try {
+        const res = await fetch('/api/kb/history');
+        const data = await res.json();
+        const tbody = document.getElementById('history-table-body');
+        if (!data.history || data.history.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Belum ada pemindaian soal. Tekan Ctrl+Shift+H pada halaman soal untuk melihat bukti baca di sini.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = data.history.map(item => {
+          const refsHtml = item.kb_references && item.kb_references.length > 0
+            ? item.kb_references.map((ref, idx) => `
+                <div style="margin-bottom: 6px; padding: 6px 8px; background: rgba(0,0,0,0.3); border-radius: 4px; border-left: 2px solid var(--accent);">
+                  <strong style="color: var(--accent-cyan); font-size: 11px;">📄 ${ref.file}</strong>
+                  <div style="font-size: 11px; color: #cbd5e1; margin-top: 2px;">"${ref.snippet}..."</div>
+                </div>
+              `).join('')
+            : '<span style="color: var(--text-muted); font-size: 12px;">(Tidak ada referensi cocok, dijawab dari pemahaman model)</span>';
+
+          const ocrHtml = item.ocr_text && item.ocr_text.trim()
+            ? `
+              <details style="margin-top: 6px; font-size: 11px; background: rgba(0,0,0,0.25); padding: 4px 8px; border-radius: 4px; border-left: 2px solid #06b6d4;">
+                <summary style="cursor: pointer; color: #06b6d4; font-weight: 600;">🔍 Teks Hasil OCR Screenshot</summary>
+                <pre style="margin: 4px 0 0 0; white-space: pre-wrap; color: #cbd5e1; font-family: monospace; font-size: 11px;">${item.ocr_text}</pre>
+              </details>
+            `
+            : '';
+
+          return `
+            <tr>
+              <td><code>${item.timestamp}</code></td>
+              <td style="max-width: 280px;">
+                <div>${item.question}</div>
+                ${ocrHtml}
+              </td>
+              <td style="max-width: 360px;">${refsHtml}</td>
+              <td>
+                <strong style="color: var(--accent); font-size: 14px;">${item.answer}</strong>
+                <div style="font-size: 11px; color: var(--text-muted);">${item.matched_text || ''}</div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (e) {
+        console.error("Gagal memuat riwayat:", e);
+      }
+    }
+
+    // API Key Pool Management
+    async function loadApiKeys() {
+      try {
+        const res = await fetch('/api/keys');
+        const data = await res.json();
+        const tbody = document.getElementById('keys-table-body');
+        if (!data.keys || data.keys.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Belum ada kunci API terdaftar. Silakan tempel kunci Groq Anda di atas.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = data.keys.map(k => {
+          const isCooldown = k.status === 'cooldown';
+          const statusBadge = isCooldown
+            ? `<span style="display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">⏳ Cooldown (${k.wait_seconds}s)</span>`
+            : `<span style="display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">🟢 Aktif & Siap</span>`;
+
+          const priorityLabel = k.index === 1 ? `<span style="color: var(--accent); font-weight: bold;">#1 Utama</span>` : `#${k.index} Cadangan`;
+
+          return `
+            <tr>
+              <td>${priorityLabel}</td>
+              <td><code>${k.masked}</code></td>
+              <td>${statusBadge}</td>
+              <td>
+                <button class="btn btn-danger" style="padding: 3px 8px; font-size: 11px;" onclick="deleteApiKey('${k.key}')">🗑️ Hapus</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error("Gagal memuat kunci:", err);
+      }
+    }
+
+    document.getElementById('key-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const inputEl = document.getElementById('new-groq-key');
+      const keyVal = inputEl.value.trim();
+      if (!keyVal) return;
+
+      try {
+        const res = await fetch('/api/keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: keyVal })
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.detail || `HTTP ${res.status}`);
+        }
+        alert("Kunci API Groq berhasil ditambahkan ke pool failover!");
+        inputEl.value = '';
+        loadApiKeys();
+      } catch (err) {
+        alert("Gagal menambahkan kunci: " + err.message);
+      }
+    });
+
+    async function deleteApiKey(keyVal) {
+      if (!confirm("Hapus kunci API ini dari pool?")) return;
+      try {
+        const res = await fetch('/api/keys', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: keyVal })
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.detail || `HTTP ${res.status}`);
+        }
+        loadApiKeys();
+      } catch (err) {
+        alert("Gagal menghapus kunci: " + err.message);
+      }
+    }
+
+    // Inisialisasi
+    loadFileList();
+    loadHistory();
+    // Auto-refresh riwayat tiap 5 detik
+    setInterval(loadHistory, 5000);
+    // Auto-refresh status kunci jika sedang di tab keys
+    setInterval(() => {
+      if (activeTabName === 'keys') loadApiKeys();
+    }, 5000);
+  </script>
+</body>
+</html>

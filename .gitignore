@@ -1,0 +1,22 @@
+# Environment variables & secrets (JANGAN commit ke GitHub!)
+.env
+.env.local
+.env.*.local
+
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+env/
+venv/
+ENV/
+
+# Local runner scripts
+run.bat
+run.ps1
+
+# OS files
+.DS_Store
+Thumbs.db
